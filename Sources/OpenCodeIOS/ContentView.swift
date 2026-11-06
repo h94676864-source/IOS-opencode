@@ -8,7 +8,7 @@ struct ContentView: View {
         NavigationStack {
             Group {
                 if model.connectionState == .connected {
-                    OpenCodeWebView(serverURL: model.authenticatedURL())
+                    OpenCodeWebView(serverURL: model.authenticatedURL(), username: model.serverUsername, password: model.serverPassword)
                         .ignoresSafeArea(edges: .bottom)
                 } else { connectPanel }
             }
