@@ -6,7 +6,8 @@ A native SwiftUI iPhone client for an OpenCode server.
 
 - Checks the OpenCode `/global/health` endpoint.
 - Opens the server web UI in a WKWebView after a successful health check.
-- Stores the configured server URL on device.
+- Stores the configured server URL and username on device; stores the password in iOS Keychain.
+- Handles HTTP Basic authentication in both the health check and WKWebView without putting credentials in the URL.
 - Provides clear diagnostics instead of silently trying to connect to an unavailable iPhone-local server.
 
 ## Connect an iPhone
@@ -14,7 +15,8 @@ A native SwiftUI iPhone client for an OpenCode server.
 1. Start OpenCode on a computer or server reachable by the iPhone.
 2. Put both devices on the same Wi-Fi network, or configure a secured HTTPS endpoint.
 3. In the app, open Connection settings and enter the server's LAN address, for example `http://192.168.1.20:4096`.
-4. Allow local-network access if iOS requests it, then tap Connect.
+4. Enter the server username (normally `opencode`) and password if server authentication is enabled.
+5. Allow local-network access if iOS requests it, then tap Connect.
 
 Do not use `127.0.0.1` for a computer on the network. On iPhone, that address means the iPhone itself.
 
