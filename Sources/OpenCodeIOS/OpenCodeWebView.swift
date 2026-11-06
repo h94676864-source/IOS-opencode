@@ -22,11 +22,38 @@ struct OpenCodeWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
+
+        // Force a real device-width viewport when the hosted UI omits or ships
+        // a desktop viewport. This prevents the iPhone from rendering a tiny
+        // desktop-sized page with large empty margins.
+        let mobileViewport = WKUserScript(
+            source: """
+            (() => {
+              let meta = document.querySelector('meta[name="viewport"]');
+              if (!meta) {
+                meta = document.createElement('meta');
+                meta.name = 'viewport';
+                document.head.appendChild(meta);
+              }
+              meta.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
+              document.documentElement.style.width = '100%';
+              document.documentElement.style.minWidth = '0';
+              document.body.style.width = '100%';
+              document.body.style.minWidth = '0';
+            })();
+            """,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(mobileViewport)
+
         let view = WKWebView(frame: .zero, configuration: config)
         view.navigationDelegate = context.coordinator
         view.isOpaque = false
         view.backgroundColor = UIColor(red: 0.055, green: 0.06, blue: 0.075, alpha: 1)
         view.scrollView.contentInsetAdjustmentBehavior = .never
+        view.scrollView.contentInset = .zero
+        view.scrollView.scrollIndicatorInsets = .zero
         view.allowsBackForwardNavigationGestures = true
         view.load(URLRequest(url: serverURL, timeoutInterval: 20))
         return view
