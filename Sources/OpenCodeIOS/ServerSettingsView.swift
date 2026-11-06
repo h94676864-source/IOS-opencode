@@ -4,6 +4,7 @@ struct ServerSettingsView: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
     @State private var serverText = ""
+    @State private var usernameText = "opencode"
     @State private var passwordText = ""
     @State private var validationError: String?
 
@@ -16,6 +17,9 @@ struct ServerSettingsView: View {
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
                         .textContentType(.URL)
+                    TextField("Username", text: $usernameText)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                     SecureField("Server password (optional)", text: $passwordText)
                         .textContentType(.password)
                     Text("Password is stored in iOS Keychain. Use a reachable server address; 127.0.0.1 refers to this iPhone.")
@@ -32,7 +36,7 @@ struct ServerSettingsView: View {
                 Section {
                     Button("Save and connect") {
                         do {
-                            try model.saveSettings(server: serverText, password: passwordText)
+                            try model.saveSettings(server: serverText, username: usernameText, password: passwordText)
                             dismiss()
                             Task { await model.checkConnection() }
                         } catch { validationError = error.localizedDescription }
@@ -44,6 +48,7 @@ struct ServerSettingsView: View {
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
             .onAppear {
                 serverText = model.serverURL.absoluteString
+                usernameText = model.serverUsername
                 passwordText = model.serverPassword
             }
         }
