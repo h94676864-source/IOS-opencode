@@ -17,24 +17,49 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
       - name: Install XcodeGen
         run: brew install xcodegen
+
+      - name: Validate source plist
+        run: plutil -lint Sources/OpenCodeIOS/Info.plist
+
       - name: Generate Xcode project
         run: xcodegen generate
+
       - name: Build and package unsigned IPA
         shell: bash
         run: |
           set -euo pipefail
-          xcodebuild -project OpenCodeIOS.xcodeproj -scheme OpenCodeIOS -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+
+          xcodebuild \
+            -project OpenCodeIOS.xcodeproj \
+            -scheme OpenCodeIOS \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
           APP_PATH="build/Build/Products/Release-iphoneos/OpenCodeIOS.app"
           test -d "$APP_PATH"
+          test -s "$APP_PATH/Info.plist"
+
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
+          test "$BUNDLE_ID" = "com.h94676864.opencodeios"
+
           mkdir -p package/Payload
           ditto "$APP_PATH" package/Payload/OpenCodeIOS.app
           (cd package && /usr/bin/zip -qry ../OpenCodeIOS-unsigned.ipa Payload)
-          shasum -a 256 OpenCodeIOS-unsigned.ipa
+
+          /usr/bin/unzip -t OpenCodeIOS-unsigned.ipa
+          shasum -a 256 OpenCodeIOS-unsigned.ipa | tee OpenCodeIOS-unsigned.ipa.sha256
+
       - uses: actions/upload-artifact@v4
         with:
           name: OpenCodeIOS-unsigned-ipa
-          path: OpenCodeIOS-unsigned.ipa
+          path: |
+            OpenCodeIOS-unsigned.ipa
+            OpenCodeIOS-unsigned.ipa.sha256
           if-no-files-found: error
           retention-days: 14
