@@ -16,7 +16,14 @@ final class AppModel: ObservableObject {
 
     init() {
         let fallback = URL(string: "https://ios-opencode.onrender.com")!
-        serverURL = defaults.string(forKey: storageKey).flatMap(URL.init(string:)) ?? fallback
+        let savedURL = defaults.string(forKey: storageKey).flatMap(URL.init(string:))
+        let wasOldRailwayDefault = savedURL?.host?.lowercased().hasSuffix(".railway.app") == true
+        if wasOldRailwayDefault || savedURL == nil {
+            serverURL = fallback
+            defaults.set(fallback.absoluteString, forKey: storageKey)
+        } else {
+            serverURL = savedURL!
+        }
         serverUsername = defaults.string(forKey: usernameKey) ?? "opencode"
     }
 
