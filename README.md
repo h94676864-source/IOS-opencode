@@ -26,3 +26,5 @@ Pushing to `ios/local-port` or manually running **Build iOS IPA** triggers a mac
 ## Runtime compatibility
 
 The Android project bundles Linux/PRoot/Alpine assets and launches a Linux OpenCode process locally. iOS does not support that Android/Linux execution model. This iOS target is a native client for a separately running OpenCode server; it does not run the Android root filesystem or Linux binaries on iOS. A true on-device engine requires a separate iOS-compatible runtime implementation.
+
+Build workflow is configured in `.github/workflows/ios-ipa.yml`.
