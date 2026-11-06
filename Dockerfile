@@ -17,4 +17,4 @@ WORKDIR /data/workspace
 EXPOSE 4096
 
 # Railway supplies PORT; local Docker uses 4096.
-CMD ["sh", "-lc", "exec opencode serve --hostname 0.0.0.0 --port \"${PORT:-4096}\""]
+CMD ["sh", "-lc", "exec opencode web --hostname 0.0.0.0 --port \"${PORT:-4096}\""]
