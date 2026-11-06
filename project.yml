@@ -13,7 +13,7 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: Sources/OpenCodeIOS
+      - Sources/OpenCodeIOS
     info:
       properties:
         NSAppTransportSecurity:
