@@ -25,16 +25,7 @@ struct ContentView: View {
             .preferredColorScheme(.dark)
             .navigationTitle(model.connectionState == .connected ? "OpenCode" : "Connect")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if model.connectionState == .connected {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Change") {
-                            model.connectionState = .idle
-                            passwordText = model.serverPassword
-                        }
-                    }
-                }
-            }
+            .toolbar(model.connectionState == .connected ? .hidden : .visible, for: .navigationBar)
         }
         .tint(.white)
         .onAppear {
@@ -201,7 +192,22 @@ struct ContentView: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
             }
         }
-        .ignoresSafeArea(edges: .bottom)
+        .overlay(alignment: .topTrailing) {
+            if model.connectionState == .connected {
+                Button("Change") {
+                    model.connectionState = .idle
+                    passwordText = model.serverPassword
+                }
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(.top, 8)
+                .padding(.trailing, 14)
+                .accessibilityIdentifier("changeServerButton")
+            }
+        }
+        .ignoresSafeArea()
     }
 
     private func connect() {
