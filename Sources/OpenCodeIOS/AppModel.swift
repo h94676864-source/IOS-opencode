@@ -7,13 +7,16 @@ final class AppModel: ObservableObject {
     @Published var connectionState: ConnectionState = .idle
     @Published var isChecking = false
     @Published var serverPassword = SecureCredentialStore.read()
+    @Published var serverUsername: String
 
     private let defaults = UserDefaults.standard
     private let storageKey = "opencode.serverURL"
+    private let usernameKey = "opencode.serverUsername"
 
     init() {
         let fallback = URL(string: "http://127.0.0.1:4096")!
         serverURL = defaults.string(forKey: storageKey).flatMap(URL.init(string:)) ?? fallback
+        serverUsername = defaults.string(forKey: usernameKey) ?? "opencode"
     }
 
     var isLoopbackAddress: Bool {
@@ -21,7 +24,7 @@ final class AppModel: ObservableObject {
         return host == "localhost" || host == "::1" || host == "127.0.0.1" || host.hasPrefix("127.")
     }
 
-    func saveSettings(server: String, password: String) throws {
+    func saveSettings(server: String, username: String, password: String) throws {
         let value = server.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let c = URLComponents(string: value),
               let scheme = c.scheme?.lowercased(), ["https", "http"].contains(scheme),
@@ -30,26 +33,22 @@ final class AppModel: ObservableObject {
               let url = URL(string: value.hasSuffix("/") ? String(value.dropLast()) : value) else {
             throw ServerURLError.invalid
         }
+
+        let cleanUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanUsername.isEmpty else { throw ServerURLError.invalidUsername }
+
         try SecureCredentialStore.write(password)
         serverURL = url
+        serverUsername = cleanUsername
         serverPassword = password
         defaults.set(url.absoluteString, forKey: storageKey)
+        defaults.set(cleanUsername, forKey: usernameKey)
         connectionState = .idle
     }
 
-    func authenticatedURL() -> URL {
-        guard !serverPassword.isEmpty,
-              var components = URLComponents(url: serverURL, resolvingAgainstBaseURL: false) else {
-            return serverURL
-        }
-
-        let tokenData = Data("opencode:\(serverPassword)".utf8).base64EncodedString()
-        var queryItems = components.queryItems ?? []
-        queryItems.removeAll { $0.name == "auth_token" }
-        queryItems.append(URLQueryItem(name: "auth_token", value: tokenData))
-        components.queryItems = queryItems
-        return components.url ?? serverURL
-    }
+    // Credentials are supplied only in the HTTP authentication challenge.
+    // Never place passwords or base64 credentials in the URL/query string.
+    func authenticatedURL() -> URL { serverURL }
 
     func checkConnection() async {
         guard !isChecking else { return }
@@ -65,14 +64,24 @@ final class AppModel: ObservableObject {
         request.timeoutInterval = 15
         request.cachePolicy = .reloadIgnoringLocalCacheData
         if !serverPassword.isEmpty {
-            let credentials = Data("opencode:\(serverPassword)".utf8).base64EncodedString()
+            let credentials = Data("\(serverUsername):\(serverPassword)".utf8).base64EncodedString()
             request.setValue("Basic \(credentials)", forHTTPHeaderField: "Authorization")
         }
 
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-                connectionState = .failed("Server health check failed. Verify the address, password, and server status.")
+            guard let http = response as? HTTPURLResponse else {
+                connectionState = .failed("The server returned an invalid response.")
+                return
+            }
+            guard (200..<300).contains(http.statusCode) else {
+                let detail: String
+                switch http.statusCode {
+                case 401, 403: detail = "Authentication failed. Check the server username and password."
+                case 404: detail = "The OpenCode health endpoint was not found. Check the server URL and base path."
+                default: detail = "Server returned HTTP \(http.statusCode). Check the server status and URL."
+                }
+                connectionState = .failed(detail)
                 return
             }
             connectionState = .connected
@@ -88,7 +97,14 @@ enum ConnectionState: Equatable {
 
 enum ServerURLError: LocalizedError {
     case invalid
+    case invalidUsername
+
     var errorDescription: String? {
-        "Enter a valid HTTP(S) server URL without embedded credentials, query, or fragment."
+        switch self {
+        case .invalid:
+            return "Enter a valid HTTP(S) server URL without embedded credentials, query, or fragment."
+        case .invalidUsername:
+            return "Server username cannot be empty."
+        }
     }
 }
