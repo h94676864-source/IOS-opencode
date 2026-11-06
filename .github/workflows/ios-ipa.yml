@@ -25,7 +25,21 @@ jobs:
         run: plutil -lint Sources/OpenCodeIOS/Info.plist
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          echo "Workspace: $PWD"
+          echo "Checked-out ref: $GITHUB_REF"
+          echo "Checked-out commit: $GITHUB_SHA"
+          test -f "$GITHUB_WORKSPACE/project.yml" || {
+            echo "ERROR: project.yml is missing from the checked-out repository root."
+            echo "Root contents:"
+            ls -la "$GITHUB_WORKSPACE"
+            exit 1
+          }
+          xcodegen generate --spec "$GITHUB_WORKSPACE/project.yml"
+          test -d "$GITHUB_WORKSPACE/OpenCodeIOS.xcodeproj"
 
       - name: Build and package unsigned IPA
         shell: bash
