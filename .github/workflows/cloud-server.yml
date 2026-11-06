@@ -5,6 +5,7 @@ on:
     branches: ["ios/local-port"]
     paths:
       - "Dockerfile"
+      - "docker-entrypoint.sh"
       - ".dockerignore"
       - ".github/workflows/cloud-server.yml"
   workflow_dispatch:
@@ -25,26 +26,47 @@ jobs:
       - name: Build container
         run: docker build --pull -t opencode-ios-cloud:test .
 
+      - name: Verify startup refuses missing credentials
+        run: |
+          set -euo pipefail
+          if docker run --rm opencode-ios-cloud:test 2>startup-error.log; then
+            echo "Container unexpectedly started without a password."
+            exit 1
+          fi
+          grep -q "OPENCODE_SERVER_PASSWORD must be set" startup-error.log
+
       - name: Start protected OpenCode web server
         run: |
           docker run -d --name opencode-cloud-test \
-            -e OPENCODE_SERVER_PASSWORD='ci-only-test-password' \
+            -e OPENCODE_SERVER_PASSWORD='ci-only-test-password-12345' \
             -p 4096:4096 \
             opencode-ios-cloud:test
 
-      - name: Verify authenticated health endpoint
+      - name: Verify authentication and OpenCode health
         run: |
           set -euo pipefail
           for attempt in $(seq 1 60); do
-            if curl --fail --silent --show-error \
-              --user 'opencode:ci-only-test-password' \
-              http://127.0.0.1:4096/global/health; then
-              exit 0
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:4096/global/health || true)
+            if [ "$code" = "401" ]; then
+              break
             fi
             sleep 2
           done
-          docker logs opencode-cloud-test
-          exit 1
+          test "${code:-}" = "401" || {
+            echo "Expected unauthenticated health request to return HTTP 401; got ${code:-no response}."
+            docker logs opencode-cloud-test
+            exit 1
+          }
+
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error \
+              --user 'opencode:ci-only-test-password-12345' \
+              http://127.0.0.1:4096/global/health > health.json; then
+              break
+            fi
+            sleep 2
+          done
+          python3 -c 'import json; d=json.load(open("health.json")); assert d.get("healthy") is True, d; print("Authenticated OpenCode health:", d)'
 
       - name: Stop test container
         if: always()
