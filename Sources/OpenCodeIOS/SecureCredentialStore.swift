@@ -53,7 +53,7 @@ enum SecureCredentialStore {
         case keychain(OSStatus)
         var errorDescription: String? {
             if case let .keychain(code) = self {
-                return "Could not securely save server password (Keychain error \\(code))."
+                return "Could not securely save server password (Keychain error \(code))."
             }
             return "Could not save server password."
         }
