@@ -193,7 +193,7 @@ struct ContentView: View {
                 if model.isChecking {
                     ProgressView().tint(.black)
                 }
-                Text(model.isChecking ? "Checking…" : "Connect")
+                Text(model.isChecking ? "Checking…" : (model.isLoopbackAddress ? "Configure server" : "Connect"))
                     .fontWeight(.semibold)
             }
             .frame(maxWidth: .infinity)
@@ -201,7 +201,7 @@ struct ContentView: View {
             .foregroundStyle(.black)
             .background(.white, in: RoundedRectangle(cornerRadius: 14))
         }
-        .disabled(model.isChecking || model.isLoopbackAddress)
+        .disabled(model.isChecking)
         .padding(.horizontal, 28)
     }
 }
