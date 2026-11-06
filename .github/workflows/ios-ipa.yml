@@ -77,3 +77,5 @@ jobs:
             OpenCodeIOS-unsigned.ipa.sha256
           if-no-files-found: error
           retention-days: 14
+
+# Rebuild trigger: verify the latest iOS connection-screen source and IPA packaging.
