@@ -15,7 +15,7 @@ final class AppModel: ObservableObject {
     private let usernameKey = "opencode.serverUsername"
 
     init() {
-        let fallback = URL(string: "https://ios-opencode-production.up.railway.app")!
+        let fallback = URL(string: "https://ios-opencode.onrender.com")!
         serverURL = defaults.string(forKey: storageKey).flatMap(URL.init(string:)) ?? fallback
         serverUsername = defaults.string(forKey: usernameKey) ?? "opencode"
     }
@@ -51,6 +51,7 @@ final class AppModel: ObservableObject {
 
         let cleanUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanUsername.isEmpty else { throw ServerURLError.invalidUsername }
+        guard !password.isEmpty else { throw ServerURLError.missingPassword }
 
         try SecureCredentialStore.write(password)
         serverURL = url
@@ -62,14 +63,13 @@ final class AppModel: ObservableObject {
         connectionState = .idle
     }
 
-    // Credentials are sent only to the configured origin and never placed in the URL.
     func authenticatedURL() -> URL { serverURL }
 
     func checkConnection() async {
         guard !isChecking else { return }
         guard !isLoopbackAddress else {
             serverVersion = nil
-            connectionState = .failed("No local OpenCode engine is bundled in this iOS build. 127.0.0.1 points to this iPhone. Configure a reachable OpenCode server, or add an iOS-native engine.")
+            connectionState = .failed("Enter your reachable Render or LAN server address.")
             return
         }
 
@@ -77,17 +77,14 @@ final class AppModel: ObservableObject {
         defer { isChecking = false }
 
         let healthURL = serverURL.appendingPathComponent("global/health")
-        var request = URLRequest(url: healthURL, timeoutInterval: 15)
+        var request = URLRequest(url: healthURL, timeoutInterval: 75)
         request.httpMethod = "GET"
         request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        if !serverPassword.isEmpty {
-            let credentials = Data("\(serverUsername):\(serverPassword)".utf8).base64EncodedString()
-            request.setValue("Basic \(credentials)", forHTTPHeaderField: "Authorization")
-        }
+        let credentials = Data("\(serverUsername):\(serverPassword)".utf8).base64EncodedString()
+        request.setValue("Basic \(credentials)", forHTTPHeaderField: "Authorization")
 
-        // Do not follow redirects: a redirect must never receive this server's credentials.
         let session = URLSession(
             configuration: .ephemeral,
             delegate: RejectRedirectsDelegate(),
@@ -108,13 +105,15 @@ final class AppModel: ObservableObject {
                 let detail: String
                 switch http.statusCode {
                 case 301, 302, 303, 307, 308:
-                    detail = "The server redirected the health request. Enter its final HTTPS/LAN URL directly."
+                    detail = "The server redirected the health request. Check the Render service URL."
                 case 401, 403:
-                    detail = "Authentication failed. Check the server username and password."
+                    detail = "Login failed. Check the username and password in Render environment variables."
                 case 404:
-                    detail = "The OpenCode health endpoint was not found. Check the server URL and base path."
+                    detail = "OpenCode health endpoint was not found. Check the server URL."
+                case 502, 503, 504:
+                    detail = "Render is starting the free service. Wait a moment and tap Connect again."
                 default:
-                    detail = "Server returned HTTP \(http.statusCode). Check the server status and URL."
+                    detail = "Server returned HTTP \(http.statusCode). Check Render deployment logs."
                 }
                 connectionState = .failed(detail)
                 return
@@ -125,13 +124,13 @@ final class AppModel: ObservableObject {
                 health = try JSONDecoder().decode(OpenCodeHealth.self, from: data)
             } catch {
                 serverVersion = nil
-                connectionState = .failed("This endpoint responded, but it did not return a valid OpenCode health response.")
+                connectionState = .failed("The server replied, but its OpenCode health response was invalid.")
                 return
             }
 
             guard health.healthy else {
                 serverVersion = nil
-                connectionState = .failed("The OpenCode server reported that it is not healthy.")
+                connectionState = .failed("OpenCode server reported that it is not healthy.")
                 return
             }
 
@@ -139,7 +138,7 @@ final class AppModel: ObservableObject {
             connectionState = .connected
         } catch {
             serverVersion = nil
-            connectionState = .failed("Could not reach server: \(error.localizedDescription)")
+            connectionState = .failed("Could not reach Render. The free service may be waking up; try Connect again.")
         }
     }
 }
@@ -168,6 +167,7 @@ enum ConnectionState: Equatable {
 enum ServerURLError: LocalizedError {
     case invalid
     case invalidUsername
+    case missingPassword
 
     var errorDescription: String? {
         switch self {
@@ -175,6 +175,8 @@ enum ServerURLError: LocalizedError {
             return "Enter a valid HTTP(S) server URL without embedded credentials, query, or fragment."
         case .invalidUsername:
             return "Server username cannot be empty."
+        case .missingPassword:
+            return "Enter the server password from Render."
         }
     }
 }
