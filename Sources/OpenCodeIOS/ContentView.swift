@@ -51,7 +51,7 @@ struct ContentView: View {
                 }
             }
             .background(Color(red: 0.055, green: 0.06, blue: 0.075))
-            .navigationTitle("OpenCode")
+            .navigationTitle(model.serverVersion.map { "OpenCode · \\($0)" } ?? "OpenCode")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if model.connectionState == .connected {
