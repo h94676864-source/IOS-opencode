@@ -117,54 +117,79 @@ struct ContentView: View {
     }
 
     private var connectPanel: some View {
-        VStack(spacing: 18) {
-            Image(systemName: "terminal.fill")
-                .font(.system(size: 42, weight: .medium))
-                .padding(22)
-                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 20))
+        ScrollView {
+            VStack(spacing: 20) {
+                Image(systemName: "terminal.fill")
+                    .font(.system(size: 42, weight: .medium))
+                    .padding(22)
+                    .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 20))
+                    .accessibilityHidden(true)
 
-            Text("Connect to OpenCode")
-                .font(.title2.bold())
-
-            Text("Connect this iPhone to a running OpenCode server.")
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.white.opacity(0.65))
-                .padding(.horizontal, 28)
-
-            if model.isLoopbackAddress {
-                Label("No iOS-local engine is bundled yet", systemImage: "info.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.orange)
-
-                Text("The Android PRoot/Alpine runtime cannot run as-is on iOS. A native runtime port is still required for standalone operation.")
-                    .font(.footnote)
+                Text("Connect to OpenCode")
+                    .font(.title2.bold())
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(.white.opacity(0.65))
-                    .padding(.horizontal, 28)
-            }
+                    .fixedSize(horizontal: false, vertical: true)
 
-            serverAddressCard
-
-            if case let .failed(message) = model.connectionState {
-                Text(message)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
+                Text("Connect this iPhone to a running OpenCode server.")
+                    .font(.body)
                     .multilineTextAlignment(.center)
-                    .textSelection(.enabled)
-                    .padding(.horizontal, 28)
-            }
+                    .foregroundStyle(.white.opacity(0.72))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 420)
+                    .padding(.horizontal, 24)
 
-            connectButton
+                if model.isLoopbackAddress {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label {
+                            Text("A server address is required")
+                                .font(.subheadline.weight(.semibold))
+                                .fixedSize(horizontal: false, vertical: true)
+                        } icon: {
+                            Image(systemName: "info.circle.fill")
+                        }
+                        .foregroundStyle(.orange)
 
-            Button("Connection settings") {
-                showingSettings = true
+                        Text("This iPhone build is a client; it does not contain the Android Linux engine. The default 127.0.0.1 address points back to this iPhone. Add your reachable cloud or LAN OpenCode server in Connection settings.")
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.72))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .textSelection(.enabled)
+                    }
+                    .frame(maxWidth: 440, alignment: .leading)
+                    .padding(16)
+                    .background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                    .padding(.horizontal, 22)
+                }
+
+                serverAddressCard
+
+                if case let .failed(message) = model.connectionState {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: 440)
+                        .padding(.horizontal, 24)
+                }
+
+                connectButton
+
+                Button("Connection settings") {
+                    showingSettings = true
+                }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(.white.opacity(0.82))
+                .padding(.bottom, 8)
             }
-            .font(.footnote.weight(.medium))
-            .foregroundStyle(.white.opacity(0.75))
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 28)
+            .foregroundStyle(.white)
         }
+        .scrollIndicators(.hidden)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 30)
-        .foregroundStyle(.white)
     }
 
     private var serverAddressCard: some View {
@@ -176,7 +201,7 @@ struct ContentView: View {
 
             Text(model.serverURL.absoluteString)
                 .font(.system(.footnote, design: .monospaced))
-                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
