@@ -12,6 +12,22 @@ A native SwiftUI iPhone client for an OpenCode server.
 - Restricts WebView navigation and authentication to the configured server origin.
 - Provides connection diagnostics, retry, and reload controls.
 
+## Deploy a cloud server (no PC required)
+
+This repository now includes a Dockerfile and Railway configuration for hosting the real OpenCode server. The iPhone app connects to that server over HTTPS; the server, workspace, sessions, and provider credentials live in the cloud volume.
+
+1. Open [Railway](https://railway.com/) in Safari and sign in.
+2. Create a new project and choose **Deploy from GitHub repo**.
+3. Select `h94676864-source/IOS-opencode` and branch `ios/local-port`. Railway detects the included `Dockerfile`.
+4. In the service's **Variables**, add `OPENCODE_SERVER_PASSWORD` with a long, unique password. Do not reuse a password from another account.
+5. In **Settings → Volumes**, add a persistent volume mounted at `/data`. This preserves OpenCode settings, provider credentials, sessions, and workspace files across deploys.
+6. In **Settings → Networking**, generate a public HTTPS domain and wait for the deployment to become healthy.
+7. In the iPhone app's Connection settings, enter the generated URL (for example, `https://your-service.up.railway.app`), username `opencode`, and the exact password from step 4. Tap **Save and connect**.
+
+Railway hosting may incur charges; check its current plan and usage before deploying. The OpenCode server is password-protected, but it can run shell commands and access files in its workspace: keep the URL and password private. Configure an OpenCode model/provider from the OpenCode UI or supported provider-auth flow before sending prompts. Provider API usage may incur separate charges.
+
+The server listens on Railway's injected `PORT` and binds to `0.0.0.0`. Locally, the container defaults to port `4096`. Do not publish the service without setting `OPENCODE_SERVER_PASSWORD`.
+
 ## Connect an iPhone to a computer running OpenCode
 
 OpenCode binds to `127.0.0.1` by default, which is only reachable from the computer itself. For a phone on the same trusted Wi-Fi network, start the server so it listens on the LAN interface and protect it with a password.
@@ -54,8 +70,8 @@ xcodebuild -project OpenCodeIOS.xcodeproj -scheme OpenCodeIOS -destination 'gene
 
 Pushing to `ios/local-port` or manually running **Build iOS IPA** triggers a macOS GitHub Actions build. The workflow validates the generated app bundle, packages an unsigned IPA, and uploads it as an artifact. An unsigned IPA is not installable on a standard iPhone until signed with an Apple certificate and a matching provisioning profile.
 
-## Important runtime limitation
+## Runtime architecture
 
-The Android app runs a Linux/PRoot/Alpine environment and Linux OpenCode binaries. iOS cannot run that Android/Linux root filesystem or those Linux binaries as-is. This branch is a native iOS client for a separately running OpenCode server; it is not yet an offline, self-contained port of the Android engine.
+The Android app runs a Linux/PRoot/Alpine environment and Linux OpenCode binaries. iOS cannot run that Android/Linux root filesystem or those Linux binaries as-is. The iOS app is a native client; the cloud Docker service runs the actual OpenCode engine. This gives the phone the OpenCode server's full tool/runtime capabilities without pretending the Linux engine runs inside iOS.
 
-Matching Android's fully local behavior requires a separate iOS-compatible engine/runtime implementation. Copying the Android root filesystem into an IPA does not create an iOS runtime.
+Matching Android's fully on-device behavior would require a separate iOS-compatible engine/runtime implementation.
