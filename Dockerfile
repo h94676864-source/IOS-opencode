@@ -23,6 +23,6 @@ VOLUME ["/data"]
 EXPOSE 4096
 
 HEALTHCHECK --interval=30s --timeout=8s --start-period=45s --retries=3 \
-  CMD-SHELL 'curl --fail --silent --show-error --user "${OPENCODE_SERVER_USERNAME:-opencode}:${OPENCODE_SERVER_PASSWORD}" "http://127.0.0.1:${PORT:-4096}/global/health" >/dev/null || exit 1'
+  curl --fail --silent --show-error --user "${OPENCODE_SERVER_USERNAME:-opencode}:${OPENCODE_SERVER_PASSWORD}" "http://127.0.0.1:${PORT:-4096}/global/health" >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/opencode-entrypoint"]
