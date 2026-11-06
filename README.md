@@ -22,7 +22,7 @@ This repository now includes a Dockerfile and Railway configuration for hosting 
 4. In the service's **Variables**, add `OPENCODE_SERVER_PASSWORD` with a long, unique password. Do not reuse a password from another account.
 5. In **Settings → Volumes**, add a persistent volume mounted at `/data`. This preserves OpenCode settings, provider credentials, sessions, and workspace files across deploys.
 6. In **Settings → Networking**, generate a public HTTPS domain and wait for the deployment to become healthy.
-7. In the iPhone app's Connection settings, enter the generated URL (for example, `https://your-service.up.railway.app`), username `opencode`, and the exact password from step 4. Tap **Save and connect**.
+7. The iPhone app now starts with `https://ios-opencode-production.up.railway.app` prefilled. In Connection settings, confirm the generated URL, enter username `opencode` and the exact password from step 4, then tap **Save and connect**.
 
 Railway hosting may incur charges; check its current plan and usage before deploying. The OpenCode server is password-protected, but it can run shell commands and access files in its workspace: keep the URL and password private. Configure an OpenCode model/provider from the OpenCode UI or supported provider-auth flow before sending prompts. Provider API usage may incur separate charges.
 
