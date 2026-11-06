@@ -47,6 +47,7 @@ struct OpenCodeWebView: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        private var configuredURL: String
         private var allowedScheme: String
         private var allowedHost: String
         private var allowedPort: Int
@@ -63,6 +64,7 @@ struct OpenCodeWebView: UIViewRepresentable {
             onLoadingChange: @escaping (Bool) -> Void,
             onError: @escaping (String?) -> Void
         ) {
+            configuredURL = serverURL.absoluteString
             allowedScheme = serverURL.scheme?.lowercased() ?? "https"
             allowedHost = serverURL.host?.lowercased() ?? ""
             allowedPort = serverURL.port ?? (allowedScheme == "https" ? 443 : 80)
@@ -77,7 +79,8 @@ struct OpenCodeWebView: UIViewRepresentable {
             let scheme = serverURL.scheme?.lowercased() ?? "https"
             let host = serverURL.host?.lowercased() ?? ""
             let port = serverURL.port ?? (scheme == "https" ? 443 : 80)
-            let changed = scheme != allowedScheme || host != allowedHost || port != allowedPort
+            let changed = serverURL.absoluteString != configuredURL
+            configuredURL = serverURL.absoluteString
             allowedScheme = scheme
             allowedHost = host
             allowedPort = port
