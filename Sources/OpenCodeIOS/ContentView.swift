@@ -13,6 +13,12 @@ struct ContentView: View {
                 .background(Color(red: 0.055, green: 0.06, blue: 0.075))
                 .navigationTitle(navigationTitle)
                 .navigationBarTitleDisplayMode(.inline)
+                // Keep the navigation bar opaque so the scroll view never draws
+                // the first heading underneath the title/header (visible in the
+                // latest iPhone screenshots).
+                .toolbarBackground(Color(red: 0.055, green: 0.06, blue: 0.075), for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
                 .toolbar { navigationToolbar }
                 .sheet(isPresented: $showingSettings) {
                     ServerSettingsView()
