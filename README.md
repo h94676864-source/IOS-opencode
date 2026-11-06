@@ -35,14 +35,14 @@ OpenCode binds to `127.0.0.1` by default, which is only reachable from the compu
 macOS / Linux:
 
 ```sh
-OPENCODE_SERVER_PASSWORD='choose-a-long-unique-password' opencode serve --hostname 0.0.0.0 --port 4096
+OPENCODE_SERVER_PASSWORD='choose-a-long-unique-password' opencode web --hostname 0.0.0.0 --port 4096
 ```
 
 Windows PowerShell:
 
 ```powershell
 $env:OPENCODE_SERVER_PASSWORD = "choose-a-long-unique-password"
-opencode serve --hostname 0.0.0.0 --port 4096
+opencode web --hostname 0.0.0.0 --port 4096
 ```
 
 Then:
