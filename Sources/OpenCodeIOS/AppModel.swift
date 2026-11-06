@@ -38,13 +38,17 @@ final class AppModel: ObservableObject {
     }
 
     func authenticatedURL() -> URL {
-        guard !serverPassword.isEmpty else { return serverURL }
+        guard !serverPassword.isEmpty,
+              var components = URLComponents(url: serverURL, resolvingAgainstBaseURL: false) else {
+            return serverURL
+        }
+
         let tokenData = Data("opencode:\(serverPassword)".utf8).base64EncodedString()
-        var components = URLComponents(url: serverURL, resolvingAgainstBaseURL: false)
-        components?.queryItems = (components?.queryItems ?? []) + [
-            URLQueryItem(name: "auth_token", value: tokenData)
-        ]
-        return components?.url ?? serverURL
+        var queryItems = components.queryItems ?? []
+        queryItems.removeAll { $0.name == "auth_token" }
+        queryItems.append(URLQueryItem(name: "auth_token", value: tokenData))
+        components.queryItems = queryItems
+        return components.url ?? serverURL
     }
 
     func checkConnection() async {
