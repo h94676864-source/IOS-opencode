@@ -19,7 +19,7 @@ RUN chmod 0755 /usr/local/bin/opencode-entrypoint \
     && mkdir -p /data/workspace /data/.config /data/.local/share /data/.cache
 
 WORKDIR /data/workspace
-VOLUME ["/data"]
+# Railway persistent storage is configured in the Railway service Volumes UI.
 EXPOSE 4096
 
 HEALTHCHECK --interval=30s --timeout=8s --start-period=45s --retries=3 \
