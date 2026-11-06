@@ -1,0 +1,51 @@
+name: Validate cloud OpenCode container
+
+on:
+  push:
+    branches: ["ios/local-port"]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/cloud-server.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-server-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build container
+        run: docker build --pull -t opencode-ios-cloud:test .
+
+      - name: Start protected OpenCode web server
+        run: |
+          docker run -d --name opencode-cloud-test \
+            -e OPENCODE_SERVER_PASSWORD='ci-only-test-password' \
+            -p 4096:4096 \
+            opencode-ios-cloud:test
+
+      - name: Verify authenticated health endpoint
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error \
+              --user 'opencode:ci-only-test-password' \
+              http://127.0.0.1:4096/global/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs opencode-cloud-test
+          exit 1
+
+      - name: Stop test container
+        if: always()
+        run: docker rm -f opencode-cloud-test || true
