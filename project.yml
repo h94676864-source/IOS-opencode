@@ -20,4 +20,5 @@ targets:
         PRODUCT_NAME: OpenCodeIOS
         INFOPLIST_KEY_CFBundleDisplayName: "OpenCode"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "OpenCode uses your local network to connect to an OpenCode server running on your computer."
         GENERATE_INFOPLIST_FILE: YES
