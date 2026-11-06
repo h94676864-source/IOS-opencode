@@ -15,7 +15,7 @@ final class AppModel: ObservableObject {
     private let usernameKey = "opencode.serverUsername"
 
     init() {
-        let fallback = URL(string: "http://127.0.0.1:4096")!
+        let fallback = URL(string: "https://ios-opencode-production.up.railway.app")!
         serverURL = defaults.string(forKey: storageKey).flatMap(URL.init(string:)) ?? fallback
         serverUsername = defaults.string(forKey: usernameKey) ?? "opencode"
     }
