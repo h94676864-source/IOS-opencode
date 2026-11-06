@@ -26,6 +26,16 @@ enum SecureCredentialStore {
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
+
+        // Clearing the password must also clear any previously saved Keychain value.
+        if value.isEmpty {
+            let status = SecItemDelete(key as CFDictionary)
+            guard status == errSecSuccess || status == errSecItemNotFound else {
+                throw CredentialError.keychain(status)
+            }
+            return
+        }
+
         let data = Data(value.utf8)
         let status = SecItemUpdate(key as CFDictionary, [kSecValueData as String: data] as CFDictionary)
         if status == errSecItemNotFound {
@@ -43,7 +53,7 @@ enum SecureCredentialStore {
         case keychain(OSStatus)
         var errorDescription: String? {
             if case let .keychain(code) = self {
-                return "Could not securely save server password (Keychain error \(code))."
+                return "Could not securely save server password (Keychain error \\(code))."
             }
             return "Could not save server password."
         }

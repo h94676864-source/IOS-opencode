@@ -57,6 +57,8 @@ struct OpenCodeWebView: UIViewRepresentable {
             guard let url,
                   let scheme = url.scheme?.lowercased(),
                   let host = url.host?.lowercased(),
+                  url.user == nil,
+                  url.password == nil,
                   ["http", "https"].contains(scheme) else { return false }
             let port = url.port ?? (scheme == "https" ? 443 : 80)
             return scheme == allowedScheme && host == allowedHost && port == allowedPort
