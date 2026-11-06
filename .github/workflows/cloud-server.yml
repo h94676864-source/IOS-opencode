@@ -67,6 +67,7 @@ jobs:
             sleep 2
           done
           python3 -c 'import json; d=json.load(open("health.json")); assert d.get("healthy") is True, d; print("Authenticated OpenCode health:", d)'
+          docker exec opencode-cloud-test node -e 'const fs=require("fs"); const p="/data/.config/opencode/opencode.json"; const c=JSON.parse(fs.readFileSync(p,"utf8")); if(c.default_agent!=="build") throw new Error("default_agent was not initialized"); console.log("OpenCode default agent:",c.default_agent)'
 
       - name: Stop test container
         if: always()
