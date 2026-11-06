@@ -1,0 +1,36 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["ios/local-port"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build and package unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project OpenCodeIOS.xcodeproj -scheme OpenCodeIOS -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          APP_PATH="build/Build/Products/Release-iphoneos/OpenCodeIOS.app"
+          test -d "$APP_PATH"
+          mkdir -p package/Payload
+          ditto "$APP_PATH" package/Payload/OpenCodeIOS.app
+          (cd package && /usr/bin/zip -qry ../OpenCodeIOS-unsigned.ipa Payload)
+          shasum -a 256 OpenCodeIOS-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenCodeIOS-unsigned-ipa
+          path: OpenCodeIOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
