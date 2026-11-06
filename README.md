@@ -26,7 +26,7 @@ This repository now includes a Dockerfile and Railway configuration for hosting 
 
 Railway hosting may incur charges; check its current plan and usage before deploying. The OpenCode server is password-protected, but it can run shell commands and access files in its workspace: keep the URL and password private. Configure an OpenCode model/provider from the OpenCode UI or supported provider-auth flow before sending prompts. Provider API usage may incur separate charges.
 
-The server listens on Railway's injected `PORT` and binds to `0.0.0.0`. Locally, the container defaults to port `4096`. Do not publish the service without setting `OPENCODE_SERVER_PASSWORD`.
+The container runs `opencode web` on Railway's injected `PORT` and binds to `0.0.0.0`, so the same OpenCode browser interface opens inside the iOS app. Locally, the container defaults to port `4096`. Do not publish the service without setting `OPENCODE_SERVER_PASSWORD`.
 
 ## Connect an iPhone to a computer running OpenCode
 
