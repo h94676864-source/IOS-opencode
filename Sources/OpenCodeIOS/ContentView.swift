@@ -187,7 +187,12 @@ struct ContentView: View {
 
     private var connectButton: some View {
         Button {
-            Task { await model.checkConnection() }
+            if model.isLoopbackAddress {
+                // The default loopback URL points back to this iPhone, not the cloud server.
+                showingSettings = true
+            } else {
+                Task { await model.checkConnection() }
+            }
         } label: {
             HStack {
                 if model.isChecking {
